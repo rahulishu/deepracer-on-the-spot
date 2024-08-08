@@ -16,7 +16,7 @@ def reward_function(params):
 
     # Give higher reward if the car is closer to center line and vice versa
     if distance_from_center <= marker_1:
-        reward = 3
+        reward = 3 
     elif distance_from_center <= marker_2:
         reward = 1.5
     elif distance_from_center <= marker_3:
