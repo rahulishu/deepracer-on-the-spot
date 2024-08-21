@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./create-standard-instance.sh sandbox03-base-stack training-stack-rahul-x11 720
+./create-standard-instance.sh sandbox03-base-stack training-stack-rahul-y3 720
