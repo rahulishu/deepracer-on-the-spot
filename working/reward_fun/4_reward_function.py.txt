@@ -243,6 +243,11 @@ def reward_function(params):
     distance_traveled = np.sqrt((x - prev_x)**2 + (y - prev_y)**2)
     reward += distance_traveled * 0.1
 
+    # Reward for next waypoint path
+    next_waypoint = waypoints[1]
+    waypoints_path = np.sqrt((next_waypoint[0] - prev_x)**2 + (next_waypoint[1] - prev_y)**2)
+    reward += max(0.1, 1 - (waypoints_path / (track_width / 2)))
+
     # Encourages minimal steering angle
     reward += 1.0 - (steering_angle / 27.0)
 
