@@ -59,7 +59,7 @@ def calculate_optimal_path_deviation(waypoints, closest_waypoints, x, y):
     return path_deviation
 
 def dynamic_speed_control(speed, curvature):
-    base_speed = 3.7
+    base_speed = 3.6
     if curvature < 0.1:
         return min(base_speed + 1.0, 4.0)
     elif curvature < 0.5:
@@ -86,12 +86,22 @@ def reward_function(params):
     y = params['y']
     prev_x = params.get('x_prev', x)
     prev_y = params.get('y_prev', y)
+    is_crashed = params['is_crashed']
+    is_reversed = params['is_reversed']
 
     reward = 1.0
 
     # Strong penalty for going off-track
     if is_offtrack or not all_wheels_on_track:
         return 1e-3
+    
+    # Penalize if the car is crashed
+    if is_crashed:
+        return 1e-3
+
+    # Penalize if the car is reversing
+    if is_reversed:
+        return 1e-3    
 
     # Encourage following the optimal path using apex and waypoints
     optimal_path_deviation = calculate_apex_distance(waypoints, closest_waypoints, x, y)
@@ -172,7 +182,7 @@ def reward_function(params):
         reward *= 0.8
 
     # Greatly increased reward for maintaining speed on straight sections
-    if curvature < 0.1 and speed > 3.7:  # Ensure high speed on straight paths
+    if curvature < 0.1 and speed > 3.6:  # Ensure high speed on straight paths
         reward += 10.0  # Greatly increased reward for high speed on straight paths
 
     # Penalize for unnecessary steering adjustments
@@ -198,6 +208,9 @@ def reward_function(params):
     else:
         reward *= 0.7
 
+    # Reward for staying close to the centerline
+    reward += 1.0 - (distance_from_center / (track_width / 2))
+
     # Progress-based reward
     reward += (progress / 100.0) * 2.0
 
@@ -213,21 +226,30 @@ def reward_function(params):
     if np.abs(speed - prev_speed) < SPEED_CONSISTENCY_THRESHOLD:
         reward += 1.5
 
-    # Incremental Progress Reward
-    reward += (progress / 100.0) * 2.5
+    # Give additional reward if the car pass every 100 steps faster than expected
+    if (steps % 100) == 0 and progress > (steps / TOTAL_NUM_STEPS) * 100 :
+        reward += 10.0
 
     # Time-based milestones
     MILESTONE_REWARD = 5.0
-    if progress >= 25 and steps < 75:
+    if progress >= 25 and steps < 70:
         reward += MILESTONE_REWARD
-    if progress >= 50 and steps < 150:
+    if progress >= 50 and steps < 140:
         reward += MILESTONE_REWARD
-    if progress >= 75 and steps < 225:
+    if progress >= 75 and steps < 210:
         reward += MILESTONE_REWARD
 
     # Reward for covering more distance in fewer steps
     distance_traveled = np.sqrt((x - prev_x)**2 + (y - prev_y)**2)
     reward += distance_traveled * 0.1
+
+    # Reward for next waypoint path
+    next_waypoint = waypoints[1]
+    waypoints_path = np.sqrt((next_waypoint[0] - prev_x)**2 + (next_waypoint[1] - prev_y)**2)
+    reward += max(0.1, 1 - (waypoints_path / (track_width / 2)))
+
+    # Encourages minimal steering angle
+    reward += 1.0 - (steering_angle / 27.0)
 
     # Penalize high steering angles
     if steering_angle > 15:
