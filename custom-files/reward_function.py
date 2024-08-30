@@ -59,13 +59,13 @@ def calculate_optimal_path_deviation(waypoints, closest_waypoints, x, y):
     return path_deviation
 
 def dynamic_speed_control(speed, curvature):
-    base_speed = 3.5
+    base_speed = 3.6
     if curvature < 0.1:
         return min(base_speed + 1.0, 4.0)
     elif curvature < 0.5:
         return base_speed
     else:
-        return max(1.0, 1.5 - curvature * 10)  # Ensure significant slowdown for sharp curves
+        return max(1.0, 1.6 - curvature * 10)  # Ensure significant slowdown for sharp curves
 
 def reward_function(params):
     track_width = params['track_width']
@@ -172,7 +172,7 @@ def reward_function(params):
         reward *= 0.8
 
     # Greatly increased reward for maintaining speed on straight sections
-    if curvature < 0.1 and speed > 3.5:  # Ensure high speed on straight paths
+    if curvature < 0.1 and speed > 3.6:  # Ensure high speed on straight paths
         reward += 10.0  # Greatly increased reward for high speed on straight paths
 
     # Penalize for unnecessary steering adjustments
